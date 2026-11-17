@@ -1,0 +1,20 @@
+{
+ "name": "Rep Timer",
+ "short_name": "Rep Timer",
+ "start_url": ".",
+ "display": "standalone",
+ "background_color": "#fbf8fd",
+ "theme_color": "#fbf8fd",
+ "icons": [
+  {
+   "src": "icon-192.png",
+   "sizes": "192x192",
+   "type": "image/png"
+  },
+  {
+   "src": "icon-512.png",
+   "sizes": "512x512",
+   "type": "image/png"
+  }
+ ]
+}

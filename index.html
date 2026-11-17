@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Rep Timer">
+<meta name="theme-color" content="#fbf8fd">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="manifest" href="manifest.json">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Jost:wght@300;400;500&family=Pinyon+Script&display=swap" rel="stylesheet">
+<title>Rep Timer</title>
+<style>
+/* VOICE: calm, graceful studio; Graceful Aging Movement brand
+   IDEA: a Pilates studio wall clock, airy but readable across the room
+   PICTURE: the giant countdown itself, each phase a soft full screen brand colour
+   COLOUR and TYPE: white and lilac mist, GAM indigo #4c489e, lavender, blush #f0c1b7, plum #8d30ba; Cormorant Garamond + Jost, Pinyon Script brandmark
+   LAYOUT: one column, big targets, sticky save bar */
+:root{color-scheme:light;--bg:#fbf8fd;--card:#fff;--line:#ebe3f3;--text:#2f2b4a;--mute:#8a80a3;--acc:#4c489e;--blush:#f0c1b7;--lav:#d9c9ef;--plum:#8d30ba;--soft:#f4eef9}
+*{box-sizing:border-box;min-width:0;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;min-height:100%}
+body{background:var(--bg);color:var(--text);font:16px/1.5 "Jost",-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;transition:background .4s,color .4s;overflow-x:clip}
+body[data-phase=ready]{background:#f4eef9;color:#4c489e}
+body[data-phase=work]{background:#4c489e;color:#fff}
+body[data-phase=rest]{background:#d9c9ef;color:#2f2b6e}
+body[data-phase=transition]{background:#f0c1b7;color:#3d2a5c}
+body[data-phase=count]{background:#8d30ba;color:#fff}
+body[data-phase=done]{background:#fff;color:#4c489e}
+.wrap{max-width:640px;margin:0 auto;padding:calc(env(safe-area-inset-top) + 18px) 18px calc(env(safe-area-inset-bottom) + 24px)}
+header{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:18px}
+.brandmark{font-family:"Pinyon Script",cursive;font-size:22px;color:#c98f84;line-height:1}
+h1{font-family:"Cormorant Garamond",Georgia,serif;font-weight:500;font-size:40px;margin:0;letter-spacing:.06em;text-transform:uppercase;color:var(--acc);line-height:1.05}
+h2{font-family:"Cormorant Garamond",Georgia,serif;font-weight:600;font-size:24px;margin:0;color:var(--acc)}
+button{font:inherit;color:var(--acc);background:var(--card);border:1px solid var(--line);border-radius:999px;padding:10px 18px;cursor:pointer;min-height:44px}
+button:focus-visible,input:focus-visible{outline:2px solid var(--plum);outline-offset:2px}
+button:disabled{opacity:.35}
+button.primary{background:var(--acc);border-color:var(--acc);color:#fff;font-weight:500;letter-spacing:.04em}
+button.danger{color:#b4475c}
+button.icon{width:44px;padding:0;font-size:20px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:16px;margin-bottom:14px;box-shadow:0 6px 20px rgba(76,72,158,.06)}
+.wname{font-family:"Cormorant Garamond",Georgia,serif;font-size:24px;font-weight:600;color:var(--acc);line-height:1.15}
+.desc{font-size:15px;color:var(--text);margin-top:2px}
+.meta{color:var(--mute);font-size:13px;margin:3px 0 14px}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.grow{flex:1}
+.seg{display:flex;background:var(--soft);border-radius:999px;padding:4px;gap:4px;margin-top:10px}
+.seg button{flex:1;border:0;background:transparent;padding:6px 8px;font-size:14px;min-height:38px;color:var(--mute)}
+.seg button.on{background:#fff;color:var(--acc);font-weight:500;box-shadow:0 2px 8px rgba(76,72,158,.14)}
+input[type=text],input[type=number]{width:100%;font:inherit;font-size:16px;color:var(--text);background:var(--soft);border:1px solid transparent;border-radius:12px;padding:10px 12px}
+input[type=text]:focus,input[type=number]:focus{background:#fff;border-color:var(--lav)}
+input[type=range]{width:100%;accent-color:var(--acc)}
+.fld{display:block;margin-top:12px}
+.fld>span{display:block;font-size:13px;color:var(--mute);margin-bottom:4px}
+.fld small{display:block;color:var(--mute);font-size:12px;margin-top:3px;min-height:15px}
+.grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:0 12px}
+.exhead{display:flex;gap:6px;align-items:center}
+.exhead input{font-family:"Cormorant Garamond",Georgia,serif;font-size:20px;font-weight:600;color:var(--acc)}
+.exhead button{width:40px;padding:0;flex:none}
+.section{font-family:"Cormorant Garamond",Georgia,serif;font-size:20px;font-weight:600;color:var(--acc);margin:24px 0 8px}
+.note{color:var(--mute);font-size:14px;margin:10px 0 0}
+.sticky{position:sticky;bottom:0;padding:14px 0 calc(env(safe-area-inset-bottom) + 6px);background:linear-gradient(transparent,var(--bg) 35%);display:flex;gap:8px}
+.sticky button{flex:1}
+.run{height:100vh;height:100dvh;display:flex;flex-direction:column;align-items:center;text-align:center;padding:calc(env(safe-area-inset-top) + 10px) 18px calc(env(safe-area-inset-bottom) + 14px);user-select:none;-webkit-user-select:none}
+.runtop{width:100%;display:flex;align-items:center;gap:10px}
+.runtop button,.controls button{background:color-mix(in srgb,currentColor 14%,transparent);border:0;color:inherit}
+.runtop button{width:44px;padding:0;font-size:18px}
+.rt-name{flex:1;font-family:"Cormorant Garamond",Georgia,serif;font-size:20px;font-weight:600;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rt-step{opacity:.8;font-variant-numeric:tabular-nums}
+.phase{margin-top:2vh;font-size:clamp(16px,4.4vw,22px);font-weight:500;letter-spacing:.28em;text-transform:uppercase;opacity:.85}
+.title{font-family:"Cormorant Garamond",Georgia,serif;font-size:clamp(34px,9vw,58px);font-weight:600;line-height:1.05;margin-top:4px;text-wrap:balance}
+.sub{font-size:clamp(17px,4.6vw,22px);opacity:.9;margin-top:6px;min-height:1.3em}
+.mid{flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;width:100%}
+.big{font-family:"Jost",sans-serif;font-size:min(44vw,36vh);font-weight:300;line-height:.95;font-variant-numeric:tabular-nums;letter-spacing:-.03em;transition:opacity .2s}
+.big.long{font-size:min(30vw,28vh)}
+.tempo{font-size:clamp(20px,6vw,30px);font-weight:500;min-height:1.3em;margin-top:8px}
+.of{font-size:clamp(20px,6vw,28px);font-weight:400;opacity:.92}
+.hint{opacity:.85;margin-top:10px}
+.run.paused .big{opacity:.35}
+.nextcard{background:color-mix(in srgb,currentColor 12%,transparent);border-radius:22px;padding:12px 18px;width:100%;max-width:520px;margin-bottom:14px}
+.nextcard span{display:block;font-size:12px;font-weight:500;letter-spacing:.22em;text-transform:uppercase;opacity:.8}
+.nextcard b{display:block;font-family:"Cormorant Garamond",Georgia,serif;font-size:clamp(26px,7vw,36px);font-weight:600;line-height:1.1}
+.controls{display:flex;gap:14px;justify-content:center;width:100%;margin-bottom:14px}
+.controls button{width:72px;height:60px;font-size:22px;border-radius:999px;padding:0}
+.controls button.main{width:110px}
+.bar{width:100%;height:4px;background:color-mix(in srgb,currentColor 18%,transparent);border-radius:2px;overflow:hidden}
+.bar i{display:block;height:100%;background:currentColor;width:0}
+.donebox{flex:1;display:flex;flex-direction:column;justify-content:center;gap:12px;width:100%;max-width:420px}
+.donebox .big{font-family:"Cormorant Garamond",Georgia,serif;font-style:italic;font-weight:500;font-size:clamp(56px,16vw,96px);letter-spacing:0}
+.donebox .brandmark{font-size:28px}
+.modal{position:fixed;inset:0;background:rgba(47,43,74,.45);display:flex;align-items:center;justify-content:center;padding:20px;z-index:9}
+.mbox{background:#fff;border-radius:22px;padding:20px;max-width:380px;width:100%;color:var(--text)}
+.mbox p{margin:0 0 14px;font-size:17px}
+.toast{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom) + 90px);transform:translateX(-50%);background:var(--acc);color:#fff;padding:10px 18px;border-radius:999px;z-index:10;font-size:15px}
+textarea{width:100%;height:120px;font:12px/1.4 ui-monospace,Menlo,monospace;background:var(--soft);color:var(--text);border:0;border-radius:12px;padding:8px}
+@media (prefers-reduced-motion:reduce){body{transition:none}}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<input type="file" id="importFile" accept="application/json,.json" hidden>
+<script>
+{
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const uid=()=>Math.random().toString(36).slice(2,9);
+const clone=o=>JSON.parse(JSON.stringify(o));
+const LS='repTimer.v1';
+const defaultSettings={voice:true,overMusic:true,volume:0.8,ready:5};
+
+function mkEx(name,type,o){return Object.assign({id:uid(),name,type,work:40,rest:20,sets:3,reps:10,tempo:'',repSec:3},o||{});}
+const PDESC={p_4x4:'Cardio intervals: 4 hard minutes, 3 easy, four times.',p_tabata:'20 seconds all out, 10 seconds rest, 8 rounds.',p_emom:'Do your reps at the top of each minute, rest the remainder.',p_lower:'Sample mixing tempo squats, counted leg lifts and timed bridges.',p_circuit:'Squats, push ups and plank, 40 seconds each, 3 rounds.'};
+const descOf=w=>w.desc!=null?w.desc:(PDESC[w.id]||'');
+function presets(){return [
+ {id:'p_4x4',name:'Norwegian 4x4',mode:'sets',circuitRounds:3,roundRest:60,transition:0,exercises:[mkEx('Warm up','timed',{work:600,sets:1,rest:0}),mkEx('High intensity','timed',{work:240,rest:180,sets:4}),mkEx('Cool down','timed',{work:300,sets:1,rest:0})]},
+ {id:'p_tabata',name:'Tabata',mode:'sets',circuitRounds:3,roundRest:60,transition:60,exercises:[mkEx('Tabata','timed',{work:20,rest:10,sets:8})]},
+ {id:'p_emom',name:'EMOM 10',mode:'sets',circuitRounds:3,roundRest:60,transition:0,exercises:[mkEx('Every minute','timed',{work:60,rest:0,sets:10})]},
+ {id:'p_lower',name:'Lower body strength',mode:'sets',circuitRounds:3,roundRest:60,transition:60,exercises:[mkEx('Squats','tempo',{reps:10,tempo:'3 1 2',rest:30,sets:3}),mkEx('Single leg lifts','count',{reps:12,rest:20,sets:2}),mkEx('Glute bridges','timed',{work:40,rest:20,sets:3})]},
+ {id:'p_circuit',name:'Quick circuit',mode:'circuit',circuitRounds:3,roundRest:60,transition:15,exercises:[mkEx('Squats','timed',{work:40}),mkEx('Push ups','timed',{work:40}),mkEx('Plank','timed',{work:40})]}
+];}
+function load(){try{const d=JSON.parse(localStorage.getItem(LS));if(d&&Array.isArray(d.workouts))return d;}catch(e){}return null;}
+function save(){try{localStorage.setItem(LS,JSON.stringify(db));}catch(e){}}
+let db=load()||{workouts:presets(),settings:{}};
+db.settings=Object.assign({},defaultSettings,db.settings||{});
+save();
+
+let view='home',draft=null,draftIsNew=false,R=null,timer=null;
+const app=$('#app');
+
+/* ---------- audio ---------- */
+let ac=null,master=null;
+function applyAudioSession(){try{if(navigator.audioSession)navigator.audioSession.type=db.settings.overMusic?'ambient':'playback';}catch(e){}}
+function audioInit(){
+ applyAudioSession();
+ try{
+  if(!ac){const C=window.AudioContext||window.webkitAudioContext;if(!C)return;ac=new C();master=ac.createGain();master.connect(ac.destination);}
+  master.gain.value=db.settings.volume;
+  if(ac.state!=='running')ac.resume();
+ }catch(e){}
+}
+function tone(f,t0,d,type,g){
+ if(!ac)return;
+ try{const o=ac.createOscillator(),v=ac.createGain();o.type=type||'sine';o.frequency.value=f;const t=ac.currentTime+t0;
+ v.gain.setValueAtTime(0.0001,t);v.gain.exponentialRampToValueAtTime(g||0.6,t+0.012);v.gain.exponentialRampToValueAtTime(0.0001,t+d);
+ o.connect(v);v.connect(master);o.start(t);o.stop(t+d+0.05);}catch(e){}
+}
+const SND={
+ work(){tone(880,0,0.12,'square',0.32);tone(1320,0.16,0.24,'square',0.32);},
+ rest(){tone(392,0,0.75,'sine',0.85);},
+ transition(){tone(784,0,0.2,'triangle',0.75);tone(659,0.22,0.2,'triangle',0.75);tone(523,0.44,0.38,'triangle',0.75);},
+ half(){tone(1600,0,0.05,'sine',0.35);tone(1600,0.12,0.05,'sine',0.35);},
+ tick(name){tone({Down:520,Hold:700,Up:900,Rep:900}[name]||700,0,0.07,'sine',0.45);},
+ tap(){tone(1000,0,0.05,'square',0.25);},
+ done(){[523,659,784,1047].forEach((f,i)=>tone(f,i*0.15,0.32,'triangle',0.7));}
+};
+function unlockSpeech(){try{if('speechSynthesis' in window){const u=new SpeechSynthesisUtterance(' ');u.volume=0;speechSynthesis.speak(u);}}catch(e){}}
+function say(t){if(!t||!db.settings.voice||!('speechSynthesis' in window))return;try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t);u.rate=1.05;speechSynthesis.speak(u);}catch(e){}}
+function hush(){try{speechSynthesis.cancel();}catch(e){}}
+
+/* ---------- wake lock ---------- */
+let wl=null;
+async function wake(){try{if('wakeLock' in navigator)wl=await navigator.wakeLock.request('screen');}catch(e){}}
+function unwake(){try{if(wl)wl.release();}catch(e){}wl=null;}
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&R&&!R.done){wake();if(ac&&ac.state!=='running')ac.resume();}});
+
+/* ---------- workout logic ---------- */
+const PNAMES={1:['Rep'],2:['Down','Up'],3:['Down','Hold','Up'],4:['Down','Hold','Up','Hold']};
+function tempoParts(e){const p=String(e.tempo||'').trim().split(/[^0-9]+/).filter(Boolean).map(Number);return p.length&&p.reduce((a,b)=>a+b,0)>0?p:null;}
+function workDur(e){
+ if(e.type==='timed')return +e.work||0;
+ if(e.type==='tempo'){const p=tempoParts(e);return (+e.reps||0)*(p?p.reduce((a,b)=>a+b,0):(+e.repSec||0));}
+ return null;
+}
+function buildSteps(w,noReady){
+ const S=[],X=w.exercises;
+ const push=s=>{if(s.phase==='count'||s.dur>0)S.push(s);};
+ const mk=(e,info)=>Object.assign({phase:e.type==='count'?'count':'work',ex:e,title:e.name||'Exercise',dur:workDur(e)},info);
+ const tr=+w.transition||0;
+ if(w.mode==='circuit'){
+  const RR=Math.max(1,+w.circuitRounds||1);
+  for(let r=1;r<=RR;r++){
+   X.forEach((e,i)=>{push(mk(e,{round:r,rounds:RR}));if(i<X.length-1)push({phase:'transition',title:'Rest',dur:tr});});
+   if(r<RR)push({phase:'rest',title:'Round rest',dur:+w.roundRest||0});
+  }
+ }else{
+  X.forEach((e,i)=>{
+   const n=Math.max(1,+e.sets||1);
+   for(let s=1;s<=n;s++){push(mk(e,{set:s,sets:n}));if(s<n)push({phase:'rest',title:'Rest',dur:+e.rest||0});}
+   if(i<X.length-1)push({phase:'transition',title:'Rest',dur:tr});
+  });
+ }
+ let nx=null;for(let i=S.length-1;i>=0;i--){S[i].next=nx;if(S[i].phase==='work'||S[i].phase==='count')nx=S[i];}
+ if(!noReady&&+db.settings.ready>0&&S.length)S.unshift({phase:'ready',title:'Get ready',dur:+db.settings.ready,next:nx});
+ return S;
+}
+const fmt=t=>t>=60?Math.floor(t/60)+':'+String(t%60).padStart(2,'0'):String(t);
+const fmtLong=t=>t>=60?Math.round(t/60)+' min':t+' sec';
+function subText(s){
+ if(!s||!s.ex)return '';
+ const p=[];if(s.sets>1)p.push(`Set ${s.set} of ${s.sets}`);if(s.rounds>1)p.push(`Round ${s.round} of ${s.rounds}`);
+ if(s.ex.type==='count')p.push(`${s.ex.reps} reps`);
+ if(s.ex.type==='tempo'){const tp=tempoParts(s.ex);p.push(`${s.ex.reps} reps`+(tp?`, tempo ${tp.join(' ')}`:''));}
+ return p.join(' · ');
+}
+function spokenDur(t){if(t>=60){const m=Math.floor(t/60),r=t%60;return `${m} minute${m>1?'s':''}${r?` ${r} seconds`:''}`;}return `${t} seconds`;}
+function spokenEx(s){let t=s.title;if(s.sets>1)t+=`, set ${s.set} of ${s.sets}`;if(s.rounds>1)t+=`, round ${s.round} of ${s.rounds}`;if(s.ex.type!=='timed')t+=`, ${s.ex.reps} reps`;return t;}
+function speech(s){
+ switch(s.phase){
+  case 'ready':return s.next?`Get ready. First up, ${spokenEx(s.next)}.`:'Get ready.';
+  case 'work':return spokenEx(s)+'.';
+  case 'count':return spokenEx(s)+'. Tap for each rep.';
+  case 'rest':return `Rest, ${spokenDur(s.dur)}.`+(s.next?` Next, ${spokenEx(s.next)}.`:'');
+  case 'transition':return `Rest, ${spokenDur(s.dur)}.`+(s.next?` Next up, ${spokenEx(s.next)}.`:'');
+ }return '';
+}
+function tempoInfo(s,el){
+ const e=s.ex,tp=tempoParts(e),p=tp||[Math.max(0.5,+e.repSec||3)];
+ const L=p.reduce((a,b)=>a+b,0),reps=Math.max(1,+e.reps||1);
+ const rep=Math.min(reps-1,Math.floor(el/L));let t=el-rep*L,k=0;
+ while(k<p.length-1&&t>=p[k]){t-=p[k];k++;}
+ const names=PNAMES[p.length];return {rep,k,has:!!tp,name:names?names[k]:'Phase '+(k+1)};
+}
+
+/* ---------- runner ---------- */
+function startWorkout(w){
+ audioInit();unlockSpeech();
+ const steps=buildSteps(w);
+ if(!steps.length){toast('Add an exercise first');return;}
+ R={w,steps,idx:0,paused:false,done:false,startedAt:Date.now()};
+ view='run';wake();go(0);
+ clearInterval(timer);timer=setInterval(loop,100);
+}
+function cue(s){
+ const snd={work:'work',count:'work',rest:'rest',transition:'transition'}[s.phase];
+ if(snd)SND[snd]();
+ const d=snd==='transition'?950:snd?650:0,txt=speech(s);
+ clearTimeout(R.sayT);R.sayT=setTimeout(()=>say(txt),d);
+}
+function go(i){
+ if(!R)return;clearTimeout(R.sayT);
+ if(i<0)i=0;
+ if(i>=R.steps.length){finish();return;}
+ R.idx=i;R.t0=performance.now();R.pausedAt=R.t0;R.half=false;R.tempoKey=-1;R.count=0;
+ cue(R.steps[i]);render();
+}
+function elapsed(){return ((R.paused?R.pausedAt:performance.now())-R.t0)/1000;}
+function loop(){
+ if(!R||R.paused||R.done)return;
+ const s=R.steps[R.idx];if(!s)return;
+ if(s.phase!=='count'){
+  const el=elapsed();
+  if(el>=s.dur){
+   let over=el-s.dur,i=R.idx+1;
+   while(i<R.steps.length&&R.steps[i].phase!=='count'&&over>=R.steps[i].dur){over-=R.steps[i].dur;i++;}
+   go(i);if(R&&!R.done)R.t0-=over*1000;return;
+  }
+  if(!R.half&&s.dur>=6&&el>=s.dur/2){R.half=true;SND.half();}
+  if(s.phase==='work'&&s.ex.type==='tempo'){
+   const ti=tempoInfo(s,el),key=ti.rep*10+ti.k;
+   if(key!==R.tempoKey){R.tempoKey=key;if(key!==0)SND.tick(ti.has?ti.name:'Rep');}
+  }
+ }
+ updateRun();
+}
+function countTap(){
+ const s=R.steps[R.idx],reps=Math.max(1,+s.ex.reps||1);
+ if(R.count>=reps)return;
+ R.count++;SND.tap();updateRun();
+ if(R.count>=reps)setTimeout(()=>{if(R&&!R.done&&R.steps[R.idx]===s)go(R.idx+1);},350);
+}
+function togglePause(){
+ if(R.paused){R.t0+=performance.now()-R.pausedAt;R.paused=false;if(ac&&ac.state!=='running')ac.resume();}
+ else{R.paused=true;R.pausedAt=performance.now();hush();}
+ updateRun();
+}
+function finish(){R.done=true;clearInterval(timer);SND.done();setTimeout(()=>say('Workout complete. Nice work.'),700);unwake();render();}
+function stopRun(){clearInterval(timer);if(R)clearTimeout(R.sayT);hush();unwake();R=null;view='home';render();}
+
+/* ---------- views ---------- */
+function render(){
+ if(view==='run'&&R)document.body.dataset.phase=R.done?'done':R.steps[R.idx].phase;else delete document.body.dataset.phase;
+ if(view==='home')renderHome();else if(view==='edit')renderEdit();else if(view==='settings')renderSettings();else if(view==='run')(R.done?renderDone():renderRun());
+}
+function summary(w){
+ const st=buildSteps(w,true),t=st.reduce((a,s)=>a+(s.phase==='count'?0:s.dur),0),hc=st.some(s=>s.phase==='count');
+ const n=w.exercises.length;
+ return `${w.mode==='circuit'?`Circuit, ${w.circuitRounds} rounds`:'Straight sets'} · ${n} exercise${n===1?'':'s'} · ${fmtLong(t)}${hc?' plus rep sets':''}`;
+}
+function renderHome(){
+ app.innerHTML=`<div class="wrap">
+ <header><div><div class="brandmark">Graceful Aging Movement</div><h1>Rep Timer</h1></div><button class="icon" data-a="settings" aria-label="Settings">⚙︎</button></header>
+ ${db.workouts.length?db.workouts.map(w=>`<div class="card"><div class="wname">${esc(w.name)}</div>${descOf(w)?`<div class="desc">${esc(descOf(w))}</div>`:''}<div class="meta">${esc(summary(w))}</div>
+  <div class="row"><button class="primary grow" data-a="start" data-id="${w.id}">Start</button><button data-a="edit" data-id="${w.id}">Edit</button></div></div>`).join(''):`<p class="note">No workouts yet. Add one below, or restore the presets in Settings.</p>`}
+ <button class="grow" style="width:100%" data-a="new">+ New workout</button>
+ <p class="note">Keep this screen open during your workout. On iPhone, tap Share then Add to Home Screen for a full screen app.</p>
+ </div>`;
+}
+const numF=(label,f,v,i,secs,hint)=>`<label class="fld"><span>${label}</span><input type="number" inputmode="numeric" min="0" data-f="${f}"${i!=null?` data-i="${i}"`:''} value="${esc(v)}"><small class="${secs?'mmss':''}">${secs?mmss(v):(hint||'')}</small></label>`;
+const mmss=v=>(+v>=60?'= '+fmt(+v)+' min':'seconds');
+function exCard(e,i,n,circ){
+ const t=e.type;
+ let f='';
+ if(t==='timed')f=`<div class="grid">${numF('Work','work',e.work,i,1)}${circ?'':numF('Rest between sets','rest',e.rest,i,1)}${circ?'':numF('Sets','sets',e.sets,i)}</div>`;
+ if(t==='tempo')f=`<div class="grid">${numF('Reps','reps',e.reps,i)}<label class="fld"><span>Tempo (down hold up)</span><input type="text" data-f="tempo" data-i="${i}" value="${esc(e.tempo)}" placeholder="3 1 2"><small>Blank = one beep per rep</small></label>
+  ${numF('Seconds per rep','repSec',e.repSec,i,0,'Used when tempo is blank')}${circ?'':numF('Rest between sets','rest',e.rest,i,1)}${circ?'':numF('Sets','sets',e.sets,i)}</div>`;
+ if(t==='count')f=`<div class="grid">${numF('Reps','reps',e.reps,i,0,'Tap once per rep')}${circ?'':numF('Rest between sets','rest',e.rest,i,1)}${circ?'':numF('Sets','sets',e.sets,i)}</div>`;
+ return `<div class="card"><div class="exhead"><input type="text" data-f="name" data-i="${i}" value="${esc(e.name)}" placeholder="Exercise name">
+ <button data-a="up" data-i="${i}" ${i===0?'disabled':''} aria-label="Move up">↑</button><button data-a="down" data-i="${i}" ${i===n-1?'disabled':''} aria-label="Move down">↓</button><button class="danger" data-a="del" data-i="${i}" aria-label="Remove">✕</button></div>
+ <div class="seg">${[['timed','Timed'],['tempo','Tempo paced'],['count','Rep counter']].map(([v,l])=>`<button data-a="type" data-i="${i}" data-v="${v}" class="${t===v?'on':''}">${l}</button>`).join('')}</div>${f}</div>`;
+}
+function renderEdit(){
+ const w=draft,circ=w.mode==='circuit';
+ app.innerHTML=`<div class="wrap">
+ <header><button data-a="cancel">Cancel</button><h2>${draftIsNew?'New workout':'Edit workout'}</h2><span style="width:70px"></span></header>
+ <label class="fld"><span>Workout name</span><input type="text" data-f="name" value="${esc(w.name)}"></label>
+ <label class="fld"><span>Short description (optional)</span><input type="text" data-f="desc" value="${esc(descOf(w))}" placeholder="What this workout is"></label>
+ <div class="seg">${[['sets','Straight sets'],['circuit','Circuit']].map(([v,l])=>`<button data-a="mode" data-v="${v}" class="${w.mode===v?'on':''}">${l}</button>`).join('')}</div>
+ <p class="note">${circ?'One pass through every exercise, rest, then repeat the whole list.':'Finish every set of one exercise, then move to the next.'}</p>
+ <div class="grid">${circ?numF('Circuit rounds','circuitRounds',w.circuitRounds)+numF('Rest between rounds','roundRest',w.roundRest,null,1):''}${numF('Rest before next exercise','transition',w.transition,null,1)}</div>
+ <div class="section">Exercises</div>
+ ${w.exercises.map((e,i)=>exCard(e,i,w.exercises.length,circ)).join('')}
+ <button style="width:100%" data-a="addex">+ Add exercise</button>
+ ${draftIsNew?'':`<div class="row" style="margin-top:22px"><button class="grow" data-a="dup">Duplicate</button><button class="grow danger" data-a="delw">Delete workout</button></div>`}
+ <div class="sticky"><button data-a="cancel">Cancel</button><button class="primary" data-a="save">Save</button></div>
+ </div>`;
+}
+function renderSettings(){
+ const s=db.settings;
+ app.innerHTML=`<div class="wrap">
+ <header><button data-a="home">‹ Back</button><h2>Settings</h2><span style="width:70px"></span></header>
+ <div class="card"><div class="wname">Voice announcements</div>
+  <div class="seg"><button data-a="voice" data-v="1" class="${s.voice?'on':''}">On</button><button data-a="voice" data-v="0" class="${s.voice?'':'on'}">Off</button></div></div>
+ <div class="card"><div class="wname">Sound</div>
+  <div class="seg"><button data-a="music" data-v="1" class="${s.overMusic?'on':''}">Play over my music</button><button data-a="music" data-v="0" class="${s.overMusic?'':'on'}">Timer sound only</button></div>
+  <p class="note">Play over my music follows the ring/silent switch, so turn silent off if you hear nothing. Timer sound only pauses other audio.</p>
+  <label class="fld"><span>Volume</span><input type="range" min="0" max="1" step="0.05" data-s="volume" value="${s.volume}"></label>
+  <div class="section">Hear the sounds</div>
+  <div class="row"><button data-a="snd" data-v="work">Work</button><button data-a="snd" data-v="rest">Rest</button><button data-a="snd" data-v="transition">Next exercise</button><button data-a="snd" data-v="half">Halfway</button><button data-a="snd" data-v="tempo">Tempo ticks</button></div></div>
+ <div class="card"><label class="fld" style="margin:0"><span>Get ready countdown before starting (seconds)</span><input type="number" inputmode="numeric" min="0" data-s="ready" value="${s.ready}"></label></div>
+ <div class="card"><div class="wname">Backup</div>
+  <div class="row" style="margin-top:10px"><button class="grow" data-a="export">Download backup</button><button class="grow" data-a="copy">Copy backup</button><button class="grow" data-a="import">Import backup</button></div>
+  <div class="row" style="margin-top:8px"><button class="grow" data-a="restore">Restore presets</button></div>
+  <p class="note">Workouts are saved on this device only. Export now and then so you never lose them.</p></div>
+ </div>`;
+}
+function renderRun(){
+ const s=R.steps[R.idx],PH={ready:'Get ready',work:'Work',count:'Count reps',rest:'Rest',transition:'Next exercise'};
+ const showNext=s.next&&(s.phase==='rest'||s.phase==='transition'||s.phase==='ready');
+ app.innerHTML=`<div class="run">
+ <div class="runtop"><button data-a="exit" aria-label="End workout">✕</button><div class="rt-name">${esc(R.w.name)}</div><div class="rt-step">${R.idx+1} / ${R.steps.length}</div></div>
+ <div class="phase" id="ph">${PH[s.phase]}</div>
+ <div class="title">${esc(s.title)}</div>
+ <div class="sub">${esc(subText(s))}</div>
+ <div class="mid">${s.phase==='count'?`<div class="big" id="big">0</div><div class="of">of ${esc(s.ex.reps)} reps</div><div class="hint">Tap anywhere to count a rep</div>`:`<div class="big" id="big"></div><div class="tempo" id="tempo"></div>`}</div>
+ ${showNext?`<div class="nextcard"><span>Next up</span><b>${esc(s.next.title)}</b><div>${esc(subText(s.next))}</div></div>`:''}
+ <div class="controls"><button data-a="back" aria-label="Back">⏮</button><button class="main" id="pp" data-a="pause" aria-label="Pause or resume">❚❚</button>${s.phase==='count'?'<button data-a="undo" aria-label="Undo rep">↶</button>':''}<button data-a="skip" aria-label="Skip">⏭</button></div>
+ <div class="bar"><i id="bar"></i></div></div>`;
+ updateRun();
+}
+function updateRun(){
+ if(!R||R.done)return;
+ const s=R.steps[R.idx],big=$('#big');if(!big)return;
+ const el=elapsed();
+ if(s.phase==='count')big.textContent=R.count;
+ else{
+  const txt=fmt(Math.max(0,Math.ceil(s.dur-el-0.001)));big.textContent=txt;big.classList.toggle('long',txt.length>3);
+  const te=$('#tempo');if(te&&s.phase==='work'&&s.ex.type==='tempo'){const ti=tempoInfo(s,el);te.textContent=`Rep ${ti.rep+1} of ${s.ex.reps}`+(ti.has?` · ${ti.name}`:'');}
+ }
+ $('#pp').textContent=R.paused?'▶':'❚❚';
+ $('#ph').textContent=R.paused?'Paused':{ready:'Get ready',work:'Work',count:'Count reps',rest:'Rest',transition:'Next exercise'}[s.phase];
+ $('.run').classList.toggle('paused',R.paused);
+ let tot=0,dn=0;
+ R.steps.forEach((x,j)=>{const d=x.phase==='count'?20:x.dur;tot+=d;if(j<R.idx)dn+=d;else if(j===R.idx)dn+=x.phase==='count'?d*Math.min(1,R.count/(+x.ex.reps||1)):Math.min(el,d);});
+ $('#bar').style.width=(tot?100*dn/tot:0)+'%';
+}
+function renderDone(){
+ const mins=Math.max(1,Math.round((Date.now()-R.startedAt)/60000));
+ app.innerHTML=`<div class="run"><div class="donebox"><div class="brandmark">Graceful Aging Movement</div><div class="big">Well done</div><div class="sub">${esc(R.w.name)} · ${mins} min</div>
+ <button class="primary" data-a="finish">Back to workouts</button><button data-a="again">Do it again</button></div></div>`;
+}
+
+/* ---------- helpers ---------- */
+function toast(m){const t=document.createElement('div');t.className='toast';t.textContent=m;document.body.appendChild(t);setTimeout(()=>t.remove(),2200);}
+function ask(msg,ok){return new Promise(res=>{const m=document.createElement('div');m.className='modal';
+ m.innerHTML=`<div class="mbox"><p>${esc(msg)}</p><div class="row"><button class="grow" data-m="0">Cancel</button><button class="grow primary" data-m="1">${esc(ok||'OK')}</button></div></div>`;
+ m.addEventListener('click',e=>{const b=e.target.closest('[data-m]');if(!b)return;m.remove();res(b.dataset.m==='1');});document.body.appendChild(m);});}
+function showText(title,txt){const m=document.createElement('div');m.className='modal';
+ m.innerHTML=`<div class="mbox"><p>${esc(title)}</p><textarea readonly>${esc(txt)}</textarea><div class="row" style="margin-top:10px"><button class="grow primary" data-m="1">Close</button></div></div>`;
+ m.addEventListener('click',e=>{if(e.target.closest('[data-m]'))m.remove();});document.body.appendChild(m);}
+function normalize(w){
+ const n=(v,min,d)=>{v=Number(v);return isFinite(v)&&v>=min?Math.round(v):d;};
+ w.name=String(w.name||'').trim()||'Workout';w.desc=String(descOf(w)).trim();w.mode=w.mode==='circuit'?'circuit':'sets';
+ w.circuitRounds=n(w.circuitRounds,1,3);w.roundRest=n(w.roundRest,0,60);w.transition=n(w.transition,0,30);
+ w.exercises=(w.exercises||[]).map(e=>Object.assign(mkEx('','timed'),e,{name:String(e.name||'').trim()||'Exercise',work:n(e.work,0,40),rest:n(e.rest,0,20),sets:n(e.sets,1,3),reps:n(e.reps,1,10),repSec:n(e.repSec,1,3),tempo:String(e.tempo||'')}));
+ return w;
+}
+const backupText=()=>JSON.stringify({app:'Rep Timer',version:1,exported:new Date().toISOString(),workouts:db.workouts,settings:db.settings},null,1);
+
+/* ---------- events ---------- */
+app.addEventListener('click',async e=>{
+ const b=e.target.closest('[data-a]');
+ if(view==='run'&&R&&!R.done&&!R.paused){const s=R.steps[R.idx];if(s&&s.phase==='count'&&!b){countTap();return;}}
+ if(!b||b.disabled)return;
+ const a=b.dataset.a,i=b.dataset.i!=null?+b.dataset.i:null,v=b.dataset.v,find=()=>db.workouts.find(w=>w.id===b.dataset.id);
+ switch(a){
+  case 'settings':view='settings';render();break;
+  case 'home':view='home';render();break;
+  case 'new':draft={id:uid(),name:'New workout',mode:'sets',circuitRounds:3,roundRest:60,transition:30,exercises:[mkEx('','timed')]};draftIsNew=true;view='edit';render();window.scrollTo(0,0);break;
+  case 'edit':draft=clone(find());draftIsNew=false;view='edit';render();window.scrollTo(0,0);break;
+  case 'start':startWorkout(find());break;
+  case 'mode':draft.mode=v;renderEdit();break;
+  case 'type':draft.exercises[i].type=v;renderEdit();break;
+  case 'addex':draft.exercises.push(mkEx('','timed'));renderEdit();{const ins=app.querySelectorAll('.exhead input');ins[ins.length-1].focus();}break;
+  case 'up':[draft.exercises[i-1],draft.exercises[i]]=[draft.exercises[i],draft.exercises[i-1]];renderEdit();break;
+  case 'down':[draft.exercises[i+1],draft.exercises[i]]=[draft.exercises[i],draft.exercises[i+1]];renderEdit();break;
+  case 'del':draft.exercises.splice(i,1);renderEdit();break;
+  case 'save':{normalize(draft);const k=db.workouts.findIndex(w=>w.id===draft.id);if(k>=0)db.workouts[k]=draft;else db.workouts.push(draft);save();view='home';render();toast('Saved');break;}
+  case 'cancel':view='home';render();break;
+  case 'dup':{const c=clone(normalize(draft));c.id=uid();c.name+=' copy';db.workouts.push(c);save();view='home';render();toast('Duplicated');break;}
+  case 'delw':if(await ask(`Delete "${draft.name}"?`,'Delete')){db.workouts=db.workouts.filter(w=>w.id!==draft.id);save();view='home';render();}break;
+  case 'pause':togglePause();break;
+  case 'skip':go(R.idx+1);break;
+  case 'back':go(elapsed()>3?R.idx:R.idx-1);break;
+  case 'undo':if(R.count>0){R.count--;updateRun();}break;
+  case 'exit':{const was=R.paused;if(!was)togglePause();if(await ask('End this workout?','End'))stopRun();else if(!was&&R)togglePause();break;}
+  case 'finish':stopRun();break;
+  case 'again':{const w=R.w;stopRun();startWorkout(w);break;}
+  case 'voice':db.settings.voice=v==='1';save();renderSettings();if(db.settings.voice){audioInit();say('Voice on.');}break;
+  case 'music':db.settings.overMusic=v==='1';save();applyAudioSession();renderSettings();break;
+  case 'snd':audioInit();if(v==='tempo'){['Down','Hold','Up'].forEach((n,k)=>setTimeout(()=>SND.tick(n),k*450));}else SND[v]();break;
+  case 'export':try{const blob=new Blob([backupText()],{type:'application/json'}),u=URL.createObjectURL(blob),l=document.createElement('a');l.href=u;l.download='Rep Timer backup.json';document.body.appendChild(l);l.click();l.remove();setTimeout(()=>URL.revokeObjectURL(u),2000);toast('If nothing downloaded, use Copy backup');}catch(err){toast('Download blocked here, use Copy backup');}break;
+  case 'copy':try{await navigator.clipboard.writeText(backupText());toast('Backup copied');}catch(err){showText('Copy this backup text:',backupText());}break;
+  case 'import':$('#importFile').click();break;
+  case 'restore':{const have=new Set(db.workouts.map(w=>w.id));const add=presets().filter(p=>!have.has(p.id));db.workouts.push(...add);save();toast(add.length?`Added ${add.length} preset${add.length>1?'s':''}`:'All presets already there');break;}
+ }
+});
+app.addEventListener('input',e=>{
+ const t=e.target;
+ if(view==='edit'&&t.dataset.f){
+  const val=t.type==='number'?(t.value===''?'':Number(t.value)):t.value;
+  if(t.dataset.i!=null)draft.exercises[+t.dataset.i][t.dataset.f]=val;else draft[t.dataset.f]=val;
+  const sm=t.parentElement.querySelector('small.mmss');if(sm)sm.textContent=mmss(t.value);
+ }
+ if(view==='settings'&&t.dataset.s){
+  const k=t.dataset.s;db.settings[k]=Number(t.value)||0;save();
+  if(k==='volume'&&master)master.gain.value=db.settings.volume;
+ }
+});
+$('#importFile').addEventListener('change',async e=>{
+ const f=e.target.files[0];e.target.value='';if(!f)return;
+ try{const d=JSON.parse(await f.text());if(!Array.isArray(d.workouts))throw 0;
+  if(await ask(`Replace your workouts with the ${d.workouts.length} in this backup?`,'Replace')){db.workouts=d.workouts.map(normalize);if(d.settings)db.settings=Object.assign({},defaultSettings,d.settings);save();render();toast('Backup restored');}
+ }catch(err){toast('That file is not a Rep Timer backup');}
+});
+
+
+render();
+}
+</script>
+</body>
+</html>

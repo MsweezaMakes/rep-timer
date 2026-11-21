@@ -78,6 +78,8 @@ input[type=range]{width:100%;accent-color:var(--acc)}
 .tempo{font-size:clamp(20px,6vw,30px);font-weight:500;min-height:1.3em;margin-top:8px}
 .of{font-size:clamp(20px,6vw,28px);font-weight:400;opacity:.92}
 .hint{opacity:.85;margin-top:10px}
+.cue{font-size:clamp(15px,4vw,19px);opacity:.88;margin-top:8px;max-width:520px;line-height:1.35}
+.nextcard .cue{font-size:15px;margin-top:4px}
 .run.paused .big{opacity:.35}
 .nextcard{background:color-mix(in srgb,currentColor 12%,transparent);border-radius:22px;padding:12px 18px;width:100%;max-width:520px;margin-bottom:14px}
 .nextcard span{display:block;font-size:12px;font-weight:500;letter-spacing:.22em;text-transform:uppercase;opacity:.8}
@@ -110,15 +112,42 @@ const clone=o=>JSON.parse(JSON.stringify(o));
 const LS='repTimer.v1';
 const defaultSettings={voice:true,overMusic:true,volume:0.8,ready:5};
 
-function mkEx(name,type,o){return Object.assign({id:uid(),name,type,work:40,rest:20,sets:3,reps:10,tempo:'',repSec:3},o||{});}
-const PDESC={p_4x4:'Cardio intervals: 4 hard minutes, 3 easy, four times.',p_tabata:'20 seconds all out, 10 seconds rest, 8 rounds.',p_emom:'Do your reps at the top of each minute, rest the remainder.',p_lower:'Sample mixing tempo squats, counted leg lifts and timed bridges.',p_circuit:'Squats, push ups and plank, 40 seconds each, 3 rounds.'};
+function mkEx(name,type,o){return Object.assign({id:uid(),name,type,work:40,rest:20,sets:3,reps:10,tempo:'',repSec:3,cue:'',sides:false},o||{});}
+const PDESC={p_4x4:'Cardio intervals: 4 hard minutes, 3 easy, four times.',p_tabata:'20 seconds all out, 10 seconds rest, 8 rounds.',p_emom:'Do your reps at the top of each minute, rest the remainder.',p_lower:'Sample mixing tempo squats, counted leg lifts and timed bridges.',p_circuit:'Squats, push ups and plank, 40 seconds each, 3 rounds.',p_ski_daily:'Every day, about 3 minutes. Goal: no wall by the trip.',p_ski_a:'Monday (and Friday, weeks 1 and 2). Quads that brake, knees that track.',p_ski_b:'Wednesday. Hip stability, quick balance and core.',p_ski_c:'Friday from week 3. Ski run circuit: 30 on, 15 off, 3 rounds.'};
 const descOf=w=>w.desc!=null?w.desc:(PDESC[w.id]||'');
 function presets(){return [
  {id:'p_4x4',name:'Norwegian 4x4',mode:'sets',circuitRounds:3,roundRest:60,transition:0,exercises:[mkEx('Warm up','timed',{work:600,sets:1,rest:0}),mkEx('High intensity','timed',{work:240,rest:180,sets:4}),mkEx('Cool down','timed',{work:300,sets:1,rest:0})]},
  {id:'p_tabata',name:'Tabata',mode:'sets',circuitRounds:3,roundRest:60,transition:60,exercises:[mkEx('Tabata','timed',{work:20,rest:10,sets:8})]},
  {id:'p_emom',name:'EMOM 10',mode:'sets',circuitRounds:3,roundRest:60,transition:0,exercises:[mkEx('Every minute','timed',{work:60,rest:0,sets:10})]},
  {id:'p_lower',name:'Lower body strength',mode:'sets',circuitRounds:3,roundRest:60,transition:60,exercises:[mkEx('Squats','tempo',{reps:10,tempo:'3 1 2',rest:30,sets:3}),mkEx('Single leg lifts','count',{reps:12,rest:20,sets:2}),mkEx('Glute bridges','timed',{work:40,rest:20,sets:3})]},
- {id:'p_circuit',name:'Quick circuit',mode:'circuit',circuitRounds:3,roundRest:60,transition:15,exercises:[mkEx('Squats','timed',{work:40}),mkEx('Push ups','timed',{work:40}),mkEx('Plank','timed',{work:40})]}
+ {id:'p_circuit',name:'Quick circuit',mode:'circuit',circuitRounds:3,roundRest:60,transition:15,exercises:[mkEx('Squats','timed',{work:40}),mkEx('Push ups','timed',{work:40}),mkEx('Plank','timed',{work:40})]},
+ {id:'p_ski_daily',name:'Ski Ready: Daily hip CARs',mode:'sets',circuitRounds:3,roundRest:60,transition:0,exercises:[
+  mkEx('Standing hip CARs','count',{reps:10,sets:1,sides:true,cue:'5 slow circles each direction. Tap after each circle. Use less wall each week; no hand by the trip.'})]},
+ {id:'p_ski_a',name:'Ski Ready A: Legs and Brakes',mode:'sets',circuitRounds:3,roundRest:60,transition:45,exercises:[
+  mkEx('Footwork warm up','count',{reps:5,sets:1,cue:'Reformer, medium springs. 10 each: heels, toes, V, wide second, prances. Tap after each position.'}),
+  mkEx('Single leg footwork, heel and toes','count',{reps:10,sets:2,rest:30,sides:true,cue:'Reformer, medium to heavy. Press out in 1, return in 4. Knee over second toe.'}),
+  mkEx('Going Up Front','count',{reps:6,sets:2,rest:30,sides:true,cue:'Wunda chair, light spring. Lower the pedal slowly; keep the standing hip level.'}),
+  mkEx('Slow split squat','tempo',{reps:8,tempo:'4 0 1',sets:2,rest:30,sides:true,cue:'Dumbbells. Shin angled forward like in a ski boot. Add a 3rd set when it feels easy.'}),
+  mkEx('Standing side splits','count',{reps:8,sets:2,rest:30,cue:'Reformer, light. Control the carriage both ways; this is your snowplow brake.'}),
+  mkEx('Wall sit, band above knees','timed',{work:30,sets:3,rest:30,cue:'Press knees out into the band. Hold by week: 30s, 45s, 60s, 75 to 90s, then 60s in trip week.'}),
+  mkEx('Pallof press in quarter squat','count',{reps:8,sets:2,rest:30,sides:true,cue:'Band. Hold 2 seconds at full reach; ribs and hips stay square.'})]},
+ {id:'p_ski_b',name:'Ski Ready B: Hips, Balance and Core',mode:'sets',circuitRounds:3,roundRest:60,transition:45,exercises:[
+  mkEx('Footwork warm up','count',{reps:5,sets:1,cue:'Reformer, medium springs. 10 each: heels, toes, V, wide second, prances. Tap after each position.'}),
+  mkEx('Side lying clam and leg lift','count',{reps:12,sets:2,rest:20,sides:true,cue:'Band above knees. Pelvis stacked; no rolling back.'}),
+  mkEx('Lateral walks in quarter squat','count',{reps:10,sets:2,rest:20,sides:true,cue:'Band at ankles. 10 steps each way. Stay low; knees out over toes.'}),
+  mkEx('Standing skater','count',{reps:8,sets:2,rest:20,sides:true,cue:'Reformer, light. One foot on platform, one on carriage. Push with the hip, not the knee.'}),
+  mkEx('Ski stance on wobble board','timed',{work:30,sets:3,rest:20,cue:'Knees and ankles bent, shins forward, arms in front.'}),
+  mkEx('Slow side to side tilts','count',{reps:10,sets:2,rest:20,cue:'Wobble board. Tip edge to edge like rolling onto ski edges.'}),
+  mkEx('Single leg balance','timed',{work:20,sets:2,rest:15,sides:true,cue:'Wobble board or floor. Build to 30 seconds. Eyes closed once it is easy on the floor.'}),
+  mkEx('Wedge weight shifts','timed',{work:60,sets:3,rest:30,cue:'Wide bent knee wedge; shift slowly onto one leg, then the other. Stop if the hip pinches.'}),
+  mkEx('Side plank','timed',{work:20,sets:2,rest:20,sides:true,cue:'Build to 30 seconds. Add a top leg lift in week 3.'})]},
+ {id:'p_ski_c',name:'Ski Ready C: Endurance Circuit',mode:'circuit',circuitRounds:3,roundRest:90,transition:15,exercises:[
+  mkEx('Quarter squat hold','timed',{work:30,cue:'On the wobble board.'}),
+  mkEx('Jump board, small parallel jumps','timed',{work:30,cue:'Reformer, light springs. Or skater hops on the floor, low and soft.'}),
+  mkEx('Going Up Front, alternating','timed',{work:30,cue:'Wunda chair. Alternate legs.'}),
+  mkEx('Wedge weight shifts','timed',{work:30,cue:'Wide bent knee wedge; shift slowly side to side.'}),
+  mkEx('Pallof press in quarter squat','timed',{work:30,cue:'Switch sides at the halfway tick.'}),
+  mkEx('Wall sit, band above knees','timed',{work:30,cue:'Press knees out into the band.'})]}
 ];}
 function load(){try{const d=JSON.parse(localStorage.getItem(LS));if(d&&Array.isArray(d.workouts))return d;}catch(e){}return null;}
 function save(){try{localStorage.setItem(LS,JSON.stringify(db));}catch(e){}}
@@ -187,7 +216,10 @@ function buildSteps(w,noReady){
  }else{
   X.forEach((e,i)=>{
    const n=Math.max(1,+e.sets||1);
-   for(let s=1;s<=n;s++){push(mk(e,{set:s,sets:n}));if(s<n)push({phase:'rest',title:'Rest',dur:+e.rest||0});}
+   for(let s=1;s<=n;s++){
+    if(e.sides){push(mk(e,{set:s,sets:n,side:'Right'}));push({phase:'rest',title:'Switch sides',dur:5,sw:true});push(mk(e,{set:s,sets:n,side:'Left'}));}
+    else push(mk(e,{set:s,sets:n}));
+    if(s<n)push({phase:'rest',title:'Rest',dur:+e.rest||0});}
    if(i<X.length-1)push({phase:'transition',title:'Rest',dur:tr});
   });
  }
@@ -199,19 +231,19 @@ const fmt=t=>t>=60?Math.floor(t/60)+':'+String(t%60).padStart(2,'0'):String(t);
 const fmtLong=t=>t>=60?Math.round(t/60)+' min':t+' sec';
 function subText(s){
  if(!s||!s.ex)return '';
- const p=[];if(s.sets>1)p.push(`Set ${s.set} of ${s.sets}`);if(s.rounds>1)p.push(`Round ${s.round} of ${s.rounds}`);
+ const p=[];if(s.sets>1)p.push(`Set ${s.set} of ${s.sets}`);if(s.rounds>1)p.push(`Round ${s.round} of ${s.rounds}`);if(s.side)p.push(`${s.side} side`);
  if(s.ex.type==='count')p.push(`${s.ex.reps} reps`);
  if(s.ex.type==='tempo'){const tp=tempoParts(s.ex);p.push(`${s.ex.reps} reps`+(tp?`, tempo ${tp.join(' ')}`:''));}
  return p.join(' · ');
 }
 function spokenDur(t){if(t>=60){const m=Math.floor(t/60),r=t%60;return `${m} minute${m>1?'s':''}${r?` ${r} seconds`:''}`;}return `${t} seconds`;}
-function spokenEx(s){let t=s.title;if(s.sets>1)t+=`, set ${s.set} of ${s.sets}`;if(s.rounds>1)t+=`, round ${s.round} of ${s.rounds}`;if(s.ex.type!=='timed')t+=`, ${s.ex.reps} reps`;return t;}
+function spokenEx(s){let t=s.title;if(s.sets>1)t+=`, set ${s.set} of ${s.sets}`;if(s.rounds>1)t+=`, round ${s.round} of ${s.rounds}`;if(s.side)t+=`, ${s.side.toLowerCase()} side`;if(s.ex.type!=='timed')t+=`, ${s.ex.reps} reps`;return t;}
 function speech(s){
  switch(s.phase){
   case 'ready':return s.next?`Get ready. First up, ${spokenEx(s.next)}.`:'Get ready.';
   case 'work':return spokenEx(s)+'.';
   case 'count':return spokenEx(s)+'. Tap for each rep.';
-  case 'rest':return `Rest, ${spokenDur(s.dur)}.`+(s.next?` Next, ${spokenEx(s.next)}.`:'');
+  case 'rest':if(s.sw)return 'Switch sides.';return `Rest, ${spokenDur(s.dur)}.`+(s.next?` Next, ${spokenEx(s.next)}.`:'');
   case 'transition':return `Rest, ${spokenDur(s.dur)}.`+(s.next?` Next up, ${spokenEx(s.next)}.`:'');
  }return '';
 }
@@ -308,7 +340,9 @@ function exCard(e,i,n,circ){
  if(t==='count')f=`<div class="grid">${numF('Reps','reps',e.reps,i,0,'Tap once per rep')}${circ?'':numF('Rest between sets','rest',e.rest,i,1)}${circ?'':numF('Sets','sets',e.sets,i)}</div>`;
  return `<div class="card"><div class="exhead"><input type="text" data-f="name" data-i="${i}" value="${esc(e.name)}" placeholder="Exercise name">
  <button data-a="up" data-i="${i}" ${i===0?'disabled':''} aria-label="Move up">↑</button><button data-a="down" data-i="${i}" ${i===n-1?'disabled':''} aria-label="Move down">↓</button><button class="danger" data-a="del" data-i="${i}" aria-label="Remove">✕</button></div>
- <div class="seg">${[['timed','Timed'],['tempo','Tempo paced'],['count','Rep counter']].map(([v,l])=>`<button data-a="type" data-i="${i}" data-v="${v}" class="${t===v?'on':''}">${l}</button>`).join('')}</div>${f}</div>`;
+ <div class="seg">${[['timed','Timed'],['tempo','Tempo paced'],['count','Rep counter']].map(([v,l])=>`<button data-a="type" data-i="${i}" data-v="${v}" class="${t===v?'on':''}">${l}</button>`).join('')}</div>${f}
+ ${circ?'':`<div class="seg">${[[0,'Both sides together'],[1,'Each side separately']].map(([v,l])=>`<button data-a="sides" data-i="${i}" data-v="${v}" class="${(!!e.sides)===!!v?'on':''}">${l}</button>`).join('')}</div>`}
+ <label class="fld"><span>Cue or note (optional)</span><input type="text" data-f="cue" data-i="${i}" value="${esc(e.cue)}" placeholder="Equipment, form reminder"></label></div>`;
 }
 function renderEdit(){
  const w=draft,circ=w.mode==='circuit';
@@ -353,8 +387,9 @@ function renderRun(){
  <div class="phase" id="ph">${PH[s.phase]}</div>
  <div class="title">${esc(s.title)}</div>
  <div class="sub">${esc(subText(s))}</div>
+ ${s.ex&&s.ex.cue?`<div class="cue">${esc(s.ex.cue)}</div>`:''}
  <div class="mid">${s.phase==='count'?`<div class="big" id="big">0</div><div class="of">of ${esc(s.ex.reps)} reps</div><div class="hint">Tap anywhere to count a rep</div>`:`<div class="big" id="big"></div><div class="tempo" id="tempo"></div>`}</div>
- ${showNext?`<div class="nextcard"><span>Next up</span><b>${esc(s.next.title)}</b><div>${esc(subText(s.next))}</div></div>`:''}
+ ${showNext?`<div class="nextcard"><span>Next up</span><b>${esc(s.next.title)}</b><div>${esc(subText(s.next))}</div>${s.next.ex.cue?`<div class="cue">${esc(s.next.ex.cue)}</div>`:''}</div>`:''}
  <div class="controls"><button data-a="back" aria-label="Back">⏮</button><button class="main" id="pp" data-a="pause" aria-label="Pause or resume">❚❚</button>${s.phase==='count'?'<button data-a="undo" aria-label="Undo rep">↶</button>':''}<button data-a="skip" aria-label="Skip">⏭</button></div>
  <div class="bar"><i id="bar"></i></div></div>`;
  updateRun();
@@ -393,7 +428,7 @@ function normalize(w){
  const n=(v,min,d)=>{v=Number(v);return isFinite(v)&&v>=min?Math.round(v):d;};
  w.name=String(w.name||'').trim()||'Workout';w.desc=String(descOf(w)).trim();w.mode=w.mode==='circuit'?'circuit':'sets';
  w.circuitRounds=n(w.circuitRounds,1,3);w.roundRest=n(w.roundRest,0,60);w.transition=n(w.transition,0,30);
- w.exercises=(w.exercises||[]).map(e=>Object.assign(mkEx('','timed'),e,{name:String(e.name||'').trim()||'Exercise',work:n(e.work,0,40),rest:n(e.rest,0,20),sets:n(e.sets,1,3),reps:n(e.reps,1,10),repSec:n(e.repSec,1,3),tempo:String(e.tempo||'')}));
+ w.exercises=(w.exercises||[]).map(e=>Object.assign(mkEx('','timed'),e,{name:String(e.name||'').trim()||'Exercise',work:n(e.work,0,40),rest:n(e.rest,0,20),sets:n(e.sets,1,3),reps:n(e.reps,1,10),repSec:n(e.repSec,1,3),tempo:String(e.tempo||''),cue:String(e.cue||''),sides:!!e.sides}));
  return w;
 }
 const backupText=()=>JSON.stringify({app:'Rep Timer',version:1,exported:new Date().toISOString(),workouts:db.workouts,settings:db.settings},null,1);
@@ -412,6 +447,7 @@ app.addEventListener('click',async e=>{
   case 'start':startWorkout(find());break;
   case 'mode':draft.mode=v;renderEdit();break;
   case 'type':draft.exercises[i].type=v;renderEdit();break;
+  case 'sides':draft.exercises[i].sides=v==='1';renderEdit();break;
   case 'addex':draft.exercises.push(mkEx('','timed'));renderEdit();{const ins=app.querySelectorAll('.exhead input');ins[ins.length-1].focus();}break;
   case 'up':[draft.exercises[i-1],draft.exercises[i]]=[draft.exercises[i],draft.exercises[i-1]];renderEdit();break;
   case 'down':[draft.exercises[i+1],draft.exercises[i]]=[draft.exercises[i],draft.exercises[i+1]];renderEdit();break;
